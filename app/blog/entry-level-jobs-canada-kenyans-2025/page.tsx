@@ -1,25 +1,10 @@
 "use client"
 
-import type { Metadata } from 'next'
 import { Button } from "@/components/ui/button"
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import ApplicationModal from '../../components/ApplicationModal'
-
-export const metadata: Metadata = {
-  title: 'Entry-Level Jobs in Canada 2025 | Training Provided',
-  description: 'Find the best entry-level jobs in Canada. Positions in housekeeping, hospitality, and more. Training provided. Visa sponsorship available.',
-  keywords: 'entry level jobs Canada, housekeeping jobs Canada, hotel jobs Canada, jobs in Canada',
-  openGraph: {
-    title: 'Entry-Level Jobs in Canada for Kenyans 2025 | No Experience Required',
-    description: 'Start your Canadian career with these entry-level positions. Training and visa sponsorship provided.',
-    type: 'article',
-    publishedTime: '2025-01-26T00:00:00.000Z',
-    authors: ['Global Digital Experts'],
-    tags: ['Entry Level Jobs', 'No Experience', 'Canada Immigration', 'Visa Sponsorship']
-  }
-}
 
 const jsonLd = {
   "@context": "https://schema.org",

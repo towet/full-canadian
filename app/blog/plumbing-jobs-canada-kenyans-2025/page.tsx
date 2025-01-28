@@ -1,25 +1,10 @@
 "use client"
 
-import type { Metadata } from 'next'
 import { Button } from "@/components/ui/button"
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import ApplicationModal from '../../components/ApplicationModal'
-
-export const metadata: Metadata = {
-  title: 'Plumbing Jobs in Canada 2025 | $6,933/Month with Visa Sponsorship',
-  description: 'High-paying plumbing jobs in Canada for Kenyans. Earn up to $6,933/month with full visa sponsorship, accommodation, and benefits. Updated guide for 2025 with province-wise opportunities.',
-  keywords: 'plumbing jobs Canada 2025, plumber salary Canada, Kenya plumbers Canada, visa sponsorship plumbing jobs, high paying jobs Canada, skilled trades Canada, plumbing certification Canada',
-  openGraph: {
-    title: 'Plumbing Jobs in Canada 2025 | High-Paying Opportunities',
-    description: 'Find high-paying plumbing jobs in Canada with visa sponsorship. Complete guide with salary information and certification requirements for 2025.',
-    type: 'article',
-    publishedTime: '2025-01-26T00:00:00.000Z',
-    authors: ['Global Digital Experts'],
-    tags: ['Plumbing Jobs', 'Skilled Trades', 'Canada Immigration', 'High Paying Jobs']
-  }
-}
 
 const jsonLd = {
   "@context": "https://schema.org",
