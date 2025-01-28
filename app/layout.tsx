@@ -8,6 +8,44 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Find the best jobs in Canada with visa sponsorship',
   description: 'Find the best jobs in Canada with visa sponsorship. Start your journey to Canada today with our seamless visa application process.',
+  keywords: ['Canada jobs', 'visa sponsorship', 'work in Canada', 'immigration', 'Kenyan professionals', 'Canadian work permit', 'skilled workers Canada'],
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://globaldigitalexperts.info',
+    siteName: 'CanadaVisa',
+    title: 'Find the best jobs in Canada with visa sponsorship',
+    description: 'Find the best jobs in Canada with visa sponsorship. Start your journey to Canada today with our seamless visa application process.',
+    images: [{
+      url: 'https://globaldigitalexperts.info/og-image.jpg',
+      width: 1200,
+      height: 630,
+      alt: 'CanadaVisa - Find Jobs in Canada',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Find the best jobs in Canada with visa sponsorship',
+    description: 'Find the best jobs in Canada with visa sponsorship. Start your journey to Canada today.',
+    images: ['https://globaldigitalexperts.info/og-image.jpg'],
+  },
+  alternates: {
+    canonical: 'https://globaldigitalexperts.info'
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'your-google-verification-code',
+  }
 }
 
 export default function RootLayout({
