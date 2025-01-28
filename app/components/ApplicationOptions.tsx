@@ -14,6 +14,7 @@ interface ApplicationOptionsProps {
 
 export default function ApplicationOptions({ isOpen, onClose }: ApplicationOptionsProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
+  const [formStep, setFormStep] = useState(1)
   const router = useRouter()
 
   const handleOptionClick = (option: string) => {
@@ -22,7 +23,13 @@ export default function ApplicationOptions({ isOpen, onClose }: ApplicationOptio
       onClose()
     } else {
       setSelectedOption(option)
+      setFormStep(1)
     }
+  }
+
+  const handleModalClose = () => {
+    setSelectedOption(null)
+    setFormStep(1)
   }
 
   return (
@@ -60,11 +67,12 @@ export default function ApplicationOptions({ isOpen, onClose }: ApplicationOptio
       {(selectedOption === 'study' || selectedOption === 'family') && (
         <ApplicationModal
           isOpen={!!selectedOption}
-          onClose={() => setSelectedOption(null)}
-          applicationType={selectedOption}
+          onClose={handleModalClose}
+          jobTitle={selectedOption === 'study' ? 'Student Visa Application' : 'Family Sponsorship Application'}
+          currentStep={formStep}
+          onStepChange={setFormStep}
         />
       )}
     </>
   )
 }
-
