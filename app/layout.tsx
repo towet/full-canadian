@@ -6,27 +6,61 @@ import { Button } from "@/components/ui/button"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Find the best jobs in Canada with visa sponsorship',
-  description: 'Find the best jobs in Canada with visa sponsorship. Start your journey to Canada today with our seamless visa application process.',
-  keywords: ['Canada jobs', 'visa sponsorship', 'work in Canada', 'immigration', 'Kenyan professionals', 'Canadian work permit', 'skilled workers Canada'],
+  title: 'Jobs in Canada with Visa Sponsorship 2025 | Work Permit & Immigration',
+  description: 'Find high-paying jobs in Canada with visa sponsorship. Opportunities for nanny jobs, driver jobs, cleaner jobs, and entry-level positions. Easy application process for work visa, student visa, and express entry. Apply today!',
+  keywords: [
+    // Primary Keywords
+    'jobs in canada for foreigners with visa sponsorship',
+    'visa sponsorship jobs in canada',
+    'canada work permit',
+    'express entry canada',
+    'canada immigration',
+    // Job Types
+    'nanny jobs in canada',
+    'driver jobs in canada',
+    'cleaner jobs in canada',
+    'entry level jobs in canada',
+    'skilled worker jobs in canada',
+    // Visa Types
+    'work visa canada',
+    'student visa canada',
+    'canada immigration visa',
+    'canada employment visa',
+    'canada visa work visa',
+    // Job Search
+    'job opportunities in canada',
+    'canada job vacancy',
+    'employment in canada for foreigners',
+    'work in canada with sponsorship',
+    'job application in canada for foreigners',
+    // Location-Based
+    'jobs hiring near me',
+    'job openings near me',
+    'jobs available near me',
+    // Career Focus
+    'career opportunities in canada',
+    'employment opportunities in canada',
+    'work opportunities in canada',
+    'job opportunities in canada with visa sponsorship'
+  ],
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://globaldigitalexperts.info',
-    siteName: 'CanadaVisa',
-    title: 'Find the best jobs in Canada with visa sponsorship',
-    description: 'Find the best jobs in Canada with visa sponsorship. Start your journey to Canada today with our seamless visa application process.',
+    siteName: 'Canada Jobs & Immigration',
+    title: 'Jobs in Canada with Visa Sponsorship 2025 | Work Permit & Immigration',
+    description: 'Find high-paying jobs in Canada with visa sponsorship. Apply for nanny jobs, driver jobs, cleaner jobs, and more. Get your Canadian work permit today!',
     images: [{
       url: 'https://globaldigitalexperts.info/og-image.jpg',
       width: 1200,
       height: 630,
-      alt: 'CanadaVisa - Find Jobs in Canada',
+      alt: 'Canada Jobs & Immigration - Find Work Opportunities',
     }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Find the best jobs in Canada with visa sponsorship',
-    description: 'Find the best jobs in Canada with visa sponsorship. Start your journey to Canada today.',
+    title: 'Jobs in Canada with Visa Sponsorship 2025 | Work Permit & Immigration',
+    description: 'Find high-paying jobs in Canada with visa sponsorship. Apply for nanny jobs, driver jobs, cleaner jobs, and more. Get your Canadian work permit today!',
     images: ['https://globaldigitalexperts.info/og-image.jpg'],
   },
   alternates: {
