@@ -238,8 +238,8 @@ export default function EntryLevelJobs() {
           isOpen={!!selectedJob}
           onClose={handleModalClose}
           jobTitle={selectedJob}
-          step={formStep}
-          setStep={setFormStep}
+          currentStep={formStep}
+          onStepChange={setFormStep}
         />
       )}
       {/* FAQ Section */}
