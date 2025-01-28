@@ -1,25 +1,10 @@
 "use client"
 
-import type { Metadata } from 'next'
 import { Button } from "@/components/ui/button"
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import ApplicationModal from '../../components/ApplicationModal'
-
-export const metadata: Metadata = {
-  title: 'Top 10 Highest-Paying Jobs in Canada for Kenyans 2025 | Salary Guide',
-  description: 'Discover the best-paying jobs in Canada for Kenyan professionals in 2025. Complete salary guide including plumbing, electrical work, welding, and more. Visa sponsorship available.',
-  keywords: 'highest paying jobs Canada, Kenya to Canada jobs, skilled trades Canada, plumber salary Canada, electrician jobs Canada, welder jobs Canada',
-  openGraph: {
-    title: 'Top 10 Highest-Paying Jobs in Canada for Kenyans 2025 | Up to $6,933/month',
-    description: 'Complete salary guide for Kenyans: plumbing, electrical work, welding, and more. All positions include visa sponsorship.',
-    type: 'article',
-    publishedTime: '2025-01-26T00:00:00.000Z',
-    authors: ['Global Digital Experts'],
-    tags: ['High Paying Jobs', 'Skilled Trades', 'Canada Immigration', 'Visa Sponsorship']
-  }
-}
 
 const jsonLd = {
   "@context": "https://schema.org",
