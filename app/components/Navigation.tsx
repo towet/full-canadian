@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Lock } from 'lucide-react'
 import { CVBDialog } from './CVBDialog'
+import { UnreadCounter } from './UnreadCounter'
 
 export function Navigation() {
   const [isCVBDialogOpen, setIsCVBDialogOpen] = useState(false)
@@ -27,14 +28,17 @@ export function Navigation() {
               Latest Jobs <span className="ml-1">🔥</span>
             </a>
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsCVBDialogOpen(true)}
-            className="text-gray-800 hover:text-red-600 transition-colors"
-          >
-            <Lock className="h-5 w-5" />
-          </Button>
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsCVBDialogOpen(true)}
+              className="text-gray-800 hover:text-red-600 transition-colors"
+            >
+              <Lock className="h-5 w-5" />
+            </Button>
+            <UnreadCounter />
+          </div>
         </div>
       </div>
       <CVBDialog 
