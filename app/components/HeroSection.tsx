@@ -12,7 +12,7 @@ export default function HeroSection() {
   return (
     <section className="relative w-full h-screen flex items-center justify-center text-white">
       <Image
-        src="https://canadiangeographic.ca/wp-content/uploads/2022/10/amazing-toronto-skyline-1.jpg"
+        src="/TORONTO.jpg"
         alt="Beautiful Toronto skyline at twilight"
         layout="fill"
         objectFit="cover"
