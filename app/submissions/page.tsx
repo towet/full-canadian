@@ -31,6 +31,8 @@ interface Submission {
   phone: string
   message: string
   created_at: string
+  position: string
+  replied: boolean
 }
 
 export default function SubmissionsPage() {
@@ -39,9 +41,7 @@ export default function SubmissionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("all")
-  const [emailContent, setEmailContent] = useState({ subject: "", body: "" })
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
-  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchSubmissions()
@@ -81,20 +81,74 @@ export default function SubmissionsPage() {
     setSearchTerm(term)
   }
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedSubmission) return
+  const handleEmailClick = async (submission: Submission) => {
+    const position = submission.position || "Canadian Immigration Services";
+    const subject = `Re: Application Received - ${position}`;
+    const body = `Dear ${submission.name},
 
-    toast({
-      title: "Email Sent!",
-      description: `Email sent to ${selectedSubmission.email}`,
-      duration: 3000,
-    })
-    setIsEmailDialogOpen(false)
-    setEmailContent({ subject: "", body: "" })
-  }
+Thank you for your application regarding ${position} at Global Visa Experts Canada.
 
-  const filteredSubmissions = submissions.filter(submission => {
+We have received your application and our team will process it carefully. We will connect you to available opportunities once you are successfully selected.
+
+We will keep in touch regarding the next steps in the process.
+
+Best regards,
+Global Visa Experts Canada Team
+globalvisaexpertscanada@gmail.com`;
+
+    // Open Gmail compose window
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${submission.email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(gmailUrl, '_blank');
+
+    // Update the replied status in the database
+    try {
+      const { error } = await supabase
+        .from('form_submissions')
+        .update({ replied: true })
+        .eq('id', submission.id);
+
+      if (error) {
+        toast({
+          title: "Error updating reply status",
+          description: error.message,
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Update local state
+      setSubmissions(prev => 
+        prev.map(sub => 
+          sub.id === submission.id ? { ...sub, replied: true } : sub
+        )
+      );
+
+      toast({
+        title: "Status Updated",
+        description: "Reply status has been updated",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update reply status",
+        duration: 3000,
+      });
+    }
+  };
+
+  // Sort submissions with unreplied first, then by date
+  const sortedSubmissions = [...submissions].sort((a, b) => {
+    if (a.replied === b.replied) {
+      // If both have same reply status, sort by date (newest first)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+    // Put unreplied first
+    return a.replied ? 1 : -1;
+  });
+
+  const filteredSubmissions = sortedSubmissions.filter(submission => {
     const matchesSearch = 
       submission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       submission.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -102,52 +156,6 @@ export default function SubmissionsPage() {
     if (selectedStatus === "all") return matchesSearch
     return matchesSearch
   })
-
-  const renderEmailDialog = () => (
-    <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
-      <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border-0">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Send Email Response</DialogTitle>
-          <DialogDescription className="text-gray-600 dark:text-gray-400">
-            Sending email to {selectedSubmission?.email}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleEmailSubmit} className="space-y-4">
-          <div>
-            <Input
-              placeholder="Subject"
-              value={emailContent.subject}
-              onChange={(e) => setEmailContent(prev => ({ ...prev, subject: e.target.value }))}
-              className="w-full border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-            />
-          </div>
-          <div>
-            <Textarea
-              placeholder="Email body"
-              value={emailContent.body}
-              onChange={(e) => setEmailContent(prev => ({ ...prev, body: e.target.value }))}
-              className="w-full h-32 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-            />
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsEmailDialogOpen(false)}
-              className="hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
-            >
-              Send Email
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
 
   if (loading) {
     return (
@@ -232,16 +240,14 @@ export default function SubmissionsPage() {
                         </div>
                       </div>
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedSubmission(submission)
-                          setIsEmailDialogOpen(true)
-                        }}
-                        className="mt-4 md:mt-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 border-0"
+                        onClick={() => handleEmailClick(submission)}
+                        className={`${
+                          submission.replied 
+                            ? 'bg-green-500 hover:bg-green-600 text-white' 
+                            : 'bg-red-500 hover:bg-red-600 text-white'
+                        } transition-colors duration-200`}
                       >
-                        <Mail size={16} className="mr-2" />
-                        Reply
+                        {submission.replied ? 'Replied' : 'Reply'}
                       </Button>
                     </div>
                     
@@ -288,7 +294,6 @@ export default function SubmissionsPage() {
           </div>
         )}
       </div>
-      {renderEmailDialog()}
     </div>
   )
 }

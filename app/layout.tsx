@@ -1,7 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { Button } from "@/components/ui/button"
+import { Navigation } from './components/Navigation'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -91,25 +91,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className={inter.className}>
         <header className="fixed top-0 left-0 right-0 bg-white bg-opacity-90 shadow-md z-50">
-          <nav className="container mx-auto px-6 py-3">
-            <div className="flex justify-between items-center">
-              <div className="text-xl font-semibold text-gray-800">
-                CanadaVisa
-              </div>
-              <div className="hidden md:flex space-x-4">
-                <a href="#benefits" className="text-gray-800 hover:text-red-600 transition-colors">Benefits</a>
-                <a href="#visa-types" className="text-gray-800 hover:text-red-600 transition-colors">Visa Types</a>
-                <a href="#how-it-works" className="text-gray-800 hover:text-red-600 transition-colors">How It Works</a>
-                <a href="#testimonials" className="text-gray-800 hover:text-red-600 transition-colors">Testimonials</a>
-                <a href="#faq" className="text-gray-800 hover:text-red-600 transition-colors">FAQ</a>
-              </div>
-              <Button asChild className="bg-red-600 hover:bg-red-700 text-white transition-colors">
-                <a href="/blog" className="flex items-center">
-                  Latest Jobs <span className="ml-1">🔥</span>
-                </a>
-              </Button>
-            </div>
-          </nav>
+          <Navigation />
         </header>
         <main className="pt-16">
           {children}
