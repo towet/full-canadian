@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { User, BookOpen, Briefcase, CheckCircle } from 'lucide-react'
 import { toast } from "@/components/ui/use-toast"
 import SuccessModal from './SuccessModal'
+import { supabase } from '@/lib/supabase'
 
 interface ApplicationModalProps {
   isOpen: boolean
@@ -76,39 +77,41 @@ export default function ApplicationModal({
     }
 
     try {
-      const response = await fetch("https://formspree.io/f/xannlvlw", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
+      const { error } = await supabase
+        .from('form_submissions')
+        .insert([
+          {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            phone: formData.phoneNumber,
+            message: JSON.stringify({
+              nationality: formData.nationality,
+              educationLevel: formData.educationLevel,
+              employmentStatus: formData.employmentStatus,
+              position: formData.position
+            })
+          }
+        ])
 
-      if (response.ok) {
-        setShowSuccess(true)
-        
-        setTimeout(() => {
-          setShowSuccess(false)
-          setFormData({
-            firstName: "",
-            lastName: "",
-            email: "",
-            phoneNumber: "",
-            nationality: "",
-            educationLevel: "",
-            employmentStatus: "",
-            position: jobTitle || ""
-          })
-          onClose()
-          onStepChange(1)
-        }, 5000)
-      } else {
-        toast({
-          title: "Submission Failed",
-          description: "There was an error submitting your application. Please try again.",
-          duration: 5000,
+      if (error) throw error
+
+      setShowSuccess(true)
+      
+      setTimeout(() => {
+        setShowSuccess(false)
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phoneNumber: "",
+          nationality: "",
+          educationLevel: "",
+          employmentStatus: "",
+          position: jobTitle || ""
         })
-      }
+        onClose()
+        onStepChange(1)
+      }, 5000)
     } catch (error) {
       console.error("Error submitting form:", error)
       toast({
