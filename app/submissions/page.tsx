@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
-import { Mail, Search, Filter, MoreVertical, RefreshCw, CheckCircle, X, Calendar, Phone, Globe, BookOpen, Briefcase } from 'lucide-react'
+import { Mail, Search, Filter, MoreVertical, RefreshCw, CheckCircle, X, Calendar, Phone, Globe, BookOpen, Briefcase, List, LayoutGrid } from 'lucide-react'
 
 interface Submission {
   id: string
@@ -42,10 +42,65 @@ export default function SubmissionsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
+  const [readEmails, setReadEmails] = useState<{[key: string]: boolean}>({});
+  const [markedEmails, setMarkedEmails] = useState<{[key: string]: boolean}>({});
+  const [showListView, setShowListView] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSubmissions()
   }, [])
+
+  useEffect(() => {
+    const savedReadStatus = localStorage.getItem('readEmails');
+    if (savedReadStatus) {
+      setReadEmails(JSON.parse(savedReadStatus));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Initial load of marked status
+    const loadMarkedStatus = async () => {
+      const { data, error } = await supabase
+        .from('email_markers')
+        .select('*');
+      
+      if (data) {
+        const statusMap = data.reduce((acc: {[key: string]: boolean}, item) => {
+          acc[item.email_id] = item.is_marked;
+          return acc;
+        }, {});
+        setMarkedEmails(statusMap);
+      }
+    };
+
+    loadMarkedStatus();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('email_markers')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'email_markers'
+        },
+        (payload: any) => {
+          if (payload.new) {
+            setMarkedEmails(prev => ({
+              ...prev,
+              [payload.new.email_id]: payload.new.is_marked
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   async function fetchSubmissions() {
     try {
@@ -138,24 +193,71 @@ globalvisaexpertscanada@gmail.com`;
     }
   };
 
-  // Sort submissions with unreplied first, then by date
-  const sortedSubmissions = [...submissions].sort((a, b) => {
-    if (a.replied === b.replied) {
-      // If both have same reply status, sort by date (newest first)
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    }
-    // Put unreplied first
-    return a.replied ? 1 : -1;
-  });
+  const toggleReadStatus = (submissionId: string) => {
+    const newReadEmails = {
+      ...readEmails,
+      [submissionId]: !readEmails[submissionId]
+    };
+    
+    // Save to localStorage
+    localStorage.setItem('readEmails', JSON.stringify(newReadEmails));
+    setReadEmails(newReadEmails);
+  };
 
-  const filteredSubmissions = sortedSubmissions.filter(submission => {
+  const toggleMarkedStatus = async (emailId: string) => {
+    const newStatus = !markedEmails[emailId];
+    
+    try {
+      const { error } = await supabase
+        .from('email_markers')
+        .upsert({ 
+          email_id: emailId,
+          is_marked: newStatus
+        });
+
+      if (error) throw error;
+
+      setMarkedEmails(prev => ({
+        ...prev,
+        [emailId]: newStatus
+      }));
+    } catch (error) {
+      console.error('Error updating marker:', error);
+    }
+  };
+
+  // Group submissions by email and get only the latest submission for each email
+  const uniqueSubmissions = Object.values(
+    submissions.reduce((acc: { [key: string]: Submission }, submission) => {
+      if (!acc[submission.email] || new Date(submission.created_at) > new Date(acc[submission.email].created_at)) {
+        acc[submission.email] = submission;
+      }
+      return acc;
+    }, {})
+  );
+
+  // Sort and filter the unique submissions
+  const filteredSubmissions = uniqueSubmissions.filter(submission => {
     const matchesSearch = 
       submission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       submission.email.toLowerCase().includes(searchTerm.toLowerCase())
     
     if (selectedStatus === "all") return matchesSearch
     return matchesSearch
-  })
+  }).sort((a, b) => {
+    if (a.replied === b.replied) {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+    return a.replied ? 1 : -1;
+  });
+
+  // Function to get other applications for an email
+  const getOtherApplications = (email: string) => {
+    return submissions.filter(s => 
+      s.email === email && 
+      s.id !== uniqueSubmissions.find(u => u.email === email)?.id
+    );
+  };
 
   if (loading) {
     return (
@@ -172,7 +274,15 @@ globalvisaexpertscanada@gmail.com`;
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
             Form Submissions
           </h1>
-          <p className="text-gray-600">Manage and respond to form submissions</p>
+          <div className="flex items-center gap-2">
+            <p className="text-gray-600">
+              {new Set(submissions.map(s => s.email)).size} Unique {new Set(submissions.map(s => s.email)).size === 1 ? 'Applicant' : 'Applicants'}
+            </p>
+            <span className="text-gray-400">•</span>
+            <p className="text-gray-600">
+              {submissions.length} Total {submissions.length === 1 ? 'Application' : 'Applications'}
+            </p>
+          </div>
         </div>
 
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -186,6 +296,14 @@ globalvisaexpertscanada@gmail.com`;
             />
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowListView(!showListView)}
+              className="flex items-center gap-2 border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50"
+            >
+              {showListView ? <LayoutGrid size={16} /> : <List size={16} />}
+              {showListView ? 'Card View' : 'List View'}
+            </Button>
             <Button
               variant="outline"
               onClick={fetchSubmissions}
@@ -207,6 +325,138 @@ globalvisaexpertscanada@gmail.com`;
               <p className="text-gray-500">There are no submissions matching your criteria</p>
             </CardContent>
           </Card>
+        ) : showListView ? (
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="space-y-4">
+              {filteredSubmissions.map((submission) => {
+                const messageData = JSON.parse(submission.message);
+                return (
+                  <div 
+                    key={submission.id}
+                    className={`p-4 rounded-lg border ${
+                      markedEmails[submission.id] ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
+                    }`}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div>
+                        <span className="font-semibold text-gray-700">Name:</span>
+                        <p className="text-gray-900">{submission.name}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">Email:</span>
+                        <p className="text-gray-900">{submission.email}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">Position:</span>
+                        <p className="text-gray-900">{submission.position || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">Nationality:</span>
+                        <p className="text-gray-900">{messageData.nationality || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        onClick={() => handleEmailClick(submission)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white text-sm"
+                      >
+                        Reply
+                      </Button>
+                      <Button
+                        onClick={() => toggleMarkedStatus(submission.id)}
+                        className={`${
+                          markedEmails[submission.id]
+                            ? 'bg-green-500 hover:bg-green-600' 
+                            : 'bg-red-500 hover:bg-red-600'
+                        } text-white text-sm`}
+                      >
+                        {markedEmails[submission.id] ? 'Mark as Unread' : 'Mark as Read'}
+                      </Button>
+                      {getOtherApplications(submission.email).length > 0 && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              className="w-full border-blue-200 hover:border-blue-500 hover:bg-blue-50 flex items-center justify-center gap-2"
+                            >
+                              <Mail size={16} />
+                              View {getOtherApplications(submission.email).length} Other Application{getOtherApplications(submission.email).length > 1 ? 's' : ''}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Other Applications from {submission.email}</DialogTitle>
+                              <DialogDescription>
+                                Previous applications submitted by this email
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 mt-4">
+                              {getOtherApplications(submission.email).map((app) => {
+                                const appData = JSON.parse(app.message);
+                                return (
+                                  <div 
+                                    key={app.id} 
+                                    className="p-4 border rounded-lg hover:border-blue-500 transition-colors"
+                                  >
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <span className="font-semibold text-gray-700">Name:</span>
+                                        <p className="text-gray-900">{app.name}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold text-gray-700">Date:</span>
+                                        <p className="text-gray-900">{new Date(app.created_at).toLocaleDateString()}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold text-gray-700">Position:</span>
+                                        <p className="text-gray-900">
+                                          {appData.position || app.position || 'Canadian Immigration Services'}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold text-gray-700">Nationality:</span>
+                                        <p className="text-gray-900">{appData.nationality || 'N/A'}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold text-gray-700">Education:</span>
+                                        <p className="text-gray-900">{appData.educationLevel || 'N/A'}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold text-gray-700">Email:</span>
+                                        <p className="text-gray-900">{app.email}</p>
+                                      </div>
+                                    </div>
+                                    <div className="mt-3 flex gap-2">
+                                      <Button
+                                        onClick={() => handleEmailClick(app)}
+                                        className="bg-blue-500 hover:bg-blue-600 text-white text-sm"
+                                      >
+                                        Reply
+                                      </Button>
+                                      <Button
+                                        onClick={() => toggleMarkedStatus(app.id)}
+                                        className={`${
+                                          markedEmails[app.id]
+                                            ? 'bg-green-500 hover:bg-green-600' 
+                                            : 'bg-red-500 hover:bg-red-600'
+                                        } text-white text-sm`}
+                                      >
+                                        {markedEmails[app.id] ? 'Mark as Unread' : 'Mark as Read'}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         ) : (
           <div className="grid gap-6">
             {filteredSubmissions.map((submission) => {
@@ -239,16 +489,105 @@ globalvisaexpertscanada@gmail.com`;
                           </div>
                         </div>
                       </div>
-                      <Button
-                        onClick={() => handleEmailClick(submission)}
-                        className={`${
-                          submission.replied 
-                            ? 'bg-green-500 hover:bg-green-600 text-white' 
-                            : 'bg-red-500 hover:bg-red-600 text-white'
-                        } transition-colors duration-200`}
-                      >
-                        {submission.replied ? 'Replied' : 'Reply'}
-                      </Button>
+                      <div className="flex items-center gap-4">
+                        <Button
+                          onClick={() => handleEmailClick(submission)}
+                          className="bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-200"
+                        >
+                          Reply
+                        </Button>
+                        <Button
+                          onClick={() => toggleMarkedStatus(submission.id)}
+                          className={`${
+                            markedEmails[submission.id]
+                              ? 'bg-green-500 hover:bg-green-600' 
+                              : 'bg-red-500 hover:bg-red-600'
+                          } text-white transition-colors duration-200 min-w-[120px]`}
+                        >
+                          {markedEmails[submission.id] ? 'Mark as Unread' : 'Mark as Read'}
+                        </Button>
+                        {getOtherApplications(submission.email).length > 0 && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                className="w-full border-blue-200 hover:border-blue-500 hover:bg-blue-50 flex items-center justify-center gap-2"
+                              >
+                                <Mail size={16} />
+                                View {getOtherApplications(submission.email).length} Other Application{getOtherApplications(submission.email).length > 1 ? 's' : ''}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Other Applications from {submission.email}</DialogTitle>
+                                <DialogDescription>
+                                  Previous applications submitted by this email
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4 mt-4">
+                                {getOtherApplications(submission.email).map((app) => {
+                                  const appData = JSON.parse(app.message);
+                                  const appDate = new Date(app.created_at).toLocaleDateString();
+                                  
+                                  return (
+                                    <div 
+                                      key={app.id}
+                                      className="p-4 rounded-lg border border-gray-200 hover:border-blue-500 transition-colors"
+                                    >
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <span className="font-semibold text-gray-700">Name:</span>
+                                          <p className="text-gray-900">{app.name}</p>
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold text-gray-700">Date:</span>
+                                          <p className="text-gray-900">{appDate}</p>
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold text-gray-700">Position:</span>
+                                          <p className="text-gray-900">
+                                            {appData.position || app.position || 'Canadian Immigration Services'}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold text-gray-700">Nationality:</span>
+                                          <p className="text-gray-900">{appData.nationality || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold text-gray-700">Education:</span>
+                                          <p className="text-gray-900">{appData.educationLevel || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold text-gray-700">Email:</span>
+                                          <p className="text-gray-900">{app.email}</p>
+                                        </div>
+                                      </div>
+                                      <div className="mt-3 flex gap-2">
+                                        <Button
+                                          onClick={() => handleEmailClick(app)}
+                                          className="bg-blue-500 hover:bg-blue-600 text-white text-sm"
+                                        >
+                                          Reply
+                                        </Button>
+                                        <Button
+                                          onClick={() => toggleMarkedStatus(app.id)}
+                                          className={`${
+                                            markedEmails[app.id]
+                                              ? 'bg-green-500 hover:bg-green-600' 
+                                              : 'bg-red-500 hover:bg-red-600'
+                                          } text-white text-sm`}
+                                        >
+                                          {markedEmails[app.id] ? 'Mark as Unread' : 'Mark as Read'}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6">
